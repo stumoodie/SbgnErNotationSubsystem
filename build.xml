@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<project name="NotationSubsystemBuild" default="buildAll">
+	<property name="build.dir" value="./antBuild" />
+	<property name="build.dir.src" value="${build.dir}/src"/>
+	<property name="build.dir.tests" value="${build.dir}/test"/>
+	<property name="build.dir.stubs" value="${build.dir}/stubs"/>
+	<property name="docs.build.dir" value="./doc"/>
+	<property name="src.dir" value="./src" />
+	<property name="test.dir" value="./test" />
+	<property name="jar.dir" value="./jars" />
+	<property name="jar.name.bin" value="SbgnERNotation.jar" />
+	<property name="jar.name.src" value="SbgnERNotation-src.jar" />
+	<property name="jar.name.doc" value="SbgnERNotation-docs.jar" />
+	<property name="lib.dir" value="./lib" />
+	<property name="target" value="1.5" />
+	<property name="source" value="1.5" />
+
+	<path id="classpath">
+		<pathelement location="${build.dir.src}" />
+		<pathelement location="${lib.dir}/CompoundGraph/CompoundGraph.jar" />
+		<pathelement location="${lib.dir}/BusinessObjects/BusinessObjects.jar" />
+		<pathelement location="${lib.dir}/Toolkit/toolkit.jar" />
+	</path>
+
+	<path id="test.classpath">
+		<path refid="classpath" />
+		<pathelement location="${build.dir.src}" />
+		<pathelement location="${build.dir.tests}" />
+		<pathelement location="${build.dir.stubs}" />
+	</path>
+
+
+	<target name="mkdirs" depends="" description="--> Creates the directories used in the build">
+		<mkdir dir="${build.dir}" />
+		<mkdir dir="${build.dir.src}" />
+		<mkdir dir="${build.dir.tests}" />
+		<mkdir dir="${build.dir.stubs}" />
+	</target>
+
+	<target name="clean">
+		<delete dir="${build.dir}">
+		</delete>
+	</target>
+
+	<target name="buildAll" description="main build task" depends="clean,buildSrc, api-docs,buildTest, jarAll" />
+
+	<!--target name="buildStubs" description="build task" depends="buildSrc">
+		<javac source="${source}" target="${target}" classpathref="test.classpath" srcdir="${stubs.dir}" debug="true" debuglevel="lines,vars,source" destdir="${build.dir.stubs}">
+		</javac>
+		<copy todir="${build.dir.stubs}">
+			<fileset dir="${stubs.dir}">
+				<exclude name="**/*.java" />
+				<exclude name="**/*.class" />
+			</fileset>
+		</copy>
+	</target-->
+
+	<target name="buildTest" description="test build task" depends="buildSrc">
+		<javac source="${source}" target="${target}" classpathref="test.classpath" srcdir="${test.dir}" debug="true" debuglevel="lines,vars,source" destdir="${build.dir.tests}">
+			<exclude name="**"/> <!-- everything is excluded at the moment -->
+		</javac>
+		<copy todir="${build.dir.tests}">
+			<fileset dir="${test.dir}">
+				<exclude name="**/*.java" />
+				<exclude name="**/*.class" />
+			</fileset>
+		</copy>
+	</target>
+
+	<target name="buildSrc" description="src build task" depends="mkdirs">
+		<!--echo>running with classpath ${toString:classpath}</echo-->
+		<javac classpathref="classpath" srcdir="${src.dir}" source="${source}" target="${target}" debug="true" debuglevel="lines,vars,source" destdir="${build.dir.src}">
+			<exclude name="**/export/*"/>
+			<exclude name="**/ndom/*"/>
+			<exclude name="**/ndoAPI/*"/>
+			<exclude name="**/validation/*"/>
+		</javac>
+		<copy todir="${build.dir.src}">
+			<fileset dir="${src.dir}">
+				<exclude name="**/*.java" />
+				<exclude name="**/*.class" />
+			</fileset>
+		</copy>
+	</target>
+
+	<target name="api-docs" depends="buildSrc">
+		<javadoc access="package" author="true" splitindex="true" use="true" version="true" source="1.5" sourcepath="${src.dir}" destdir="${docs.build.dir}" doctitle="Business Objects API" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false">
+			<classpath refid="classpath" />
+			<fileset dir="${src.dir}">
+				<exclude name="**/export/*.java"/>
+				<exclude name="**/ndom/*.java"/>
+				<exclude name="**/ndoAPI/*.java"/>
+				<exclude name="**/validation/*.java"/>
+			</fileset>
+		</javadoc>
+	</target>
+
+	<target name="tests" depends="buildTest">
+		<delete dir="${build.dir}/test/logs" />
+		<mkdir dir="${build.dir}/test/logs" />
+		<!-- <echo>running with classpath ${toString:test.classpath}</echo>-->
+		<!--
+			run test cases. All test class names should end in 'Test' to avoid
+			inclusion of inner classes.
+		-->
+		<junit printsummary="yes" haltonfailure="no" fork="yes">
+			<classpath>
+				<path refid="test.classpath" />
+			</classpath>
+			<batchtest todir="${build.dir}/test/logs">
+				<formatter type="xml" />
+				<fileset dir="${build.dir.tests}">
+					<include name="**/*Test.class" />
+				</fileset>
+			</batchtest>
+		</junit>
+
+		<!-- clean report directory -->
+		<delete dir="${build.dir}/test/junitReports" />
+		<mkdir dir="${build.dir}/test/junitReports" />
+
+		<!-- generate report -->
+		<junitreport todir="${build.dir}/test/junitReports">
+			<fileset dir="${build.dir}/test/logs" includes="**/*.xml" />
+			<report todir="${build.dir}/test/junitReports" />
+		</junitreport>
+	</target>
+
+	<target name="jarAll" depends="jar-bin, jar-src, jar-docs"/>
+	
+	<target name="init-jardirs">
+		<delete dir="${jar.dir}" />
+		<mkdir dir="${jar.dir}" />
+	</target>
+	
+	<target name="jar-bin" depends="buildSrc, init-jardirs">
+		<jar destfile="${jar.dir}/${jar.name.bin}">
+			<fileset dir="${build.dir.src}" />
+		</jar>
+	</target>
+	
+	<target name="jar-src" depends="init-jardirs">
+		<jar destfile="${jar.dir}/${jar.name.src}">
+			<fileset dir="${src.dir}" />
+		</jar>
+	</target>
+	
+	<target name="jar-docs" depends="api-docs">
+		<mkdir dir="${jar.dir}" />
+		<jar destfile="${jar.dir}/${jar.name.doc}">
+			<fileset dir="${docs.build.dir}" />
+		</jar>
+	</target>
+				
+</project>
