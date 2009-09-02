@@ -80,6 +80,15 @@ public class SbgnERNotationSyntaxService implements INotationSyntaxService {
 	private static final String INTERACT_DEFN = "(C) setanchor\n"
 			+ "curbounds /h exch def /w exch def /y exch def /x exch def\n"
 			+ "x y w h oval ";
+	private static final String NOT_INTERACT_DEFN =
+		"(C) setanchor\n" +
+		"curbounds /h exch def /w exch def /y exch def /x exch def\n" +
+		"/xoffset { w mul x add } def /yoffset { h mul y add } def\n" +
+		"gsave curfillcol setlinecol x y w h oval grestore\n"+
+		"x y w h 145 340 arc\n"+
+		"/rf {1 45 sin 0.6 mul sub 0.5 mul} def /lf {1 45 sin 1.4 mul sub 0.5 mul} def \n"+
+		"w lf mul x add 0.06 w mul add h lf mul y add 0.06 h mul sub w rf mul x add 0.06 w mul add h rf mul y add 0.06 h mul sub line\n"+
+		"w lf mul x add  0.06 w mul sub h lf mul y add  0.06 h mul add w rf mul x add 0.06 w mul sub h rf mul y add 0.06 h mul add line";
 	private static final String AND_SHAPE_DEFN = "curbounds /h exch def /w exch def /y exch def /x exch def\n"
 			+ "/xoffset { w mul x add } def /yoffset { h mul y add } def\n"
 			+ "x y w h oval h 0.35 mul setfontsize null setfillcol 0.5 xoffset 0.5 yoffset (C) (AND) text\n"
@@ -125,6 +134,7 @@ public class SbgnERNotationSyntaxService implements INotationSyntaxService {
 	private ShapeObjectType UnitOfInf;
 	private ShapeObjectType Entity;
 	private ShapeObjectType Interaction;
+	private ShapeObjectType NonInteraction;
 	private ShapeObjectType Outcome;
 	private ShapeObjectType Perturbation;
 	private ShapeObjectType Observable;
@@ -171,6 +181,8 @@ public class SbgnERNotationSyntaxService implements INotationSyntaxService {
 		createEntity();
 		this.Interaction = new ShapeObjectType(this, 15, "Interaction");
 		createInteraction();
+		this.NonInteraction = new ShapeObjectType(this, 105, "NonInteraction");
+		createNonInteraction();
 		this.Outcome = new ShapeObjectType(this, 16, "Outcome");
 		createOutcome();
 		this.Perturbation = new ShapeObjectType(this, 113, "Perturbing Agent");
@@ -200,6 +212,7 @@ public class SbgnERNotationSyntaxService implements INotationSyntaxService {
 		defineParentingUnitOfInf();
 		defineParentingEntity();
 		defineParentingInteraction();
+		defineParentingNonInteraction();
 		defineParentingOutcome();
 		defineParentingPerturbation();
 		defineParentingObservable();
@@ -242,6 +255,7 @@ public class SbgnERNotationSyntaxService implements INotationSyntaxService {
 		this.shapes.put(this.UnitOfInf.getUniqueId(), this.UnitOfInf);
 		this.shapes.put(this.Entity.getUniqueId(), this.Entity);
 		this.shapes.put(this.Interaction.getUniqueId(), this.Interaction);
+		this.shapes.put(this.NonInteraction.getUniqueId(), this.NonInteraction);
 		this.shapes.put(this.Outcome.getUniqueId(), this.Outcome);
 		this.shapes.put(this.Perturbation.getUniqueId(), this.Perturbation);
 		this.shapes.put(this.Observable.getUniqueId(), this.Observable);
@@ -378,7 +392,7 @@ public class SbgnERNotationSyntaxService implements INotationSyntaxService {
 		HashSet<IShapeObjectType> set = new HashSet<IShapeObjectType>();
 		set.addAll(Arrays.asList(new IShapeObjectType[] { this.State,
 				this.LocState, this.ExState, this.UnitOfInf, this.Entity,
-				this.Interaction, this.Outcome, this.Perturbation,
+				this.Interaction, this.NonInteraction, this.Outcome, this.Perturbation,
 				this.Observable, this.AndGate, this.OrGate, this.NotGate,
 				this.DelayGate, this.Decision, this.Acceptor, this.Note }));
 		set.removeAll(Arrays.asList(new IShapeObjectType[] { this.LocState,
@@ -586,6 +600,16 @@ public class SbgnERNotationSyntaxService implements INotationSyntaxService {
 		return cardFontSizeProp;
 	}
 
+	private NumberPropertyDefinition createCisFontSizeProperty() {
+		NumberPropertyDefinition cardFontSizeProp = new NumberPropertyDefinition(
+				"cisFontSize", new BigDecimal(12.0));
+		cardFontSizeProp.setVisualisable(false);
+		cardFontSizeProp.setEditable(true);
+		cardFontSizeProp.setDisplayName("Cis/Trans Font Size");
+		return cardFontSizeProp;
+	}
+
+
 	private IntegerPropertyDefinition createStoichiometryProperty() {
 		IntegerPropertyDefinition stoichProp = new IntegerPropertyDefinition(
 				"stoichiometry", 1);
@@ -600,6 +624,22 @@ public class SbgnERNotationSyntaxService implements INotationSyntaxService {
 		stoichProp.getLabelDefaults().setLabelLocationPolicy(
 				LabelLocationPolicy.COMPASS);
 		return stoichProp;
+	}
+
+	private PlainTextPropertyDefinition createCisTransProperty() {
+		PlainTextPropertyDefinition cisProp = new PlainTextPropertyDefinition(
+				"cis/trans", "cis");
+		cisProp.setVisualisable(true);
+		cisProp.setEditable(true);
+		cisProp.setDisplayName("Cis/Trans");
+		cisProp.getLabelDefaults().setLineWidth(1.0);
+		cisProp.getLabelDefaults().setFillColour(RGB.WHITE);
+		cisProp.getLabelDefaults().setLineColour(RGB.BLACK);
+		cisProp.getLabelDefaults().setNoFill(false);
+		cisProp.getLabelDefaults().setNoBorder(false);
+		cisProp.getLabelDefaults().setLabelLocationPolicy(
+				LabelLocationPolicy.COMPASS);
+		return cisProp;
 	}
 
 	private IPlainTextPropertyDefinition createNameProperty() {
@@ -621,7 +661,7 @@ public class SbgnERNotationSyntaxService implements INotationSyntaxService {
 				createNameProperty());
 		this.Entity.getDefaultAttributes().setShapeDefinition(ENTITY_DEFN);
 		this.Entity.getDefaultAttributes().setFillColour(RGB.WHITE);
-		this.Entity.getDefaultAttributes().setSize(new Dimension(60, 40));
+		this.Entity.getDefaultAttributes().setSize(new Dimension(90, 70));
 		this.Entity.getDefaultAttributes().setLineWidth(1);
 		this.Entity.getDefaultAttributes().setLineColour(RGB.BLACK);
 		this.Entity.getDefaultAttributes().setLineStyle(LineStyle.SOLID);
@@ -678,7 +718,9 @@ public class SbgnERNotationSyntaxService implements INotationSyntaxService {
 		this.Interaction.getDefaultAttributes().setLineWidth(1);
 		this.Interaction.getDefaultAttributes().setLineStyle(LineStyle.SOLID);
 		this.Interaction.getDefaultAttributes().setLineColour(RGB.BLACK);
-
+//		this.Interaction.getDefaultAttributes().addPropertyDefinition(createStoichiometryProperty());
+//		this.Interaction.getDefaultAttributes().addPropertyDefinition(createCisTransProperty());
+		
 		EnumSet<EditableShapeAttributes> editableAttributes = EnumSet
 				.noneOf(EditableShapeAttributes.class);
 		if (true) {
@@ -707,6 +749,61 @@ public class SbgnERNotationSyntaxService implements INotationSyntaxService {
 		// this.Interaction.getDefaultAttributes().setLineColourEditable(true);
 		this.Interaction.setEditableAttributes(editableAttributes);
 	}
+
+	private void createNonInteraction() {
+		this.NonInteraction.setDescription("NonInteraction entity");// ment to be
+		this.NonInteraction.getDefaultAttributes().setShapeDefinition(
+				NOT_INTERACT_DEFN);
+		this.NonInteraction.getDefaultAttributes().setFillColour(RGB.WHITE);
+		this.NonInteraction.getDefaultAttributes().setSize(new Dimension(30, 30));
+		this.NonInteraction.getDefaultAttributes().setLineWidth(1);
+		this.NonInteraction.getDefaultAttributes().setLineStyle(LineStyle.SOLID);
+		this.NonInteraction.getDefaultAttributes().setLineColour(RGB.BLACK);
+//		this.NonInteraction.getDefaultAttributes().addPropertyDefinition(createStoichiometryProperty());
+		
+		
+		EnumSet<EditableShapeAttributes> editableAttributes = EnumSet
+				.noneOf(EditableShapeAttributes.class);
+		if (true) {
+			editableAttributes.add(EditableShapeAttributes.FILL_COLOUR);
+		}
+		// this.Interaction.getDefaultAttributes().setFillEditable(true);
+		if (true) {
+			editableAttributes.add(EditableShapeAttributes.SHAPE_TYPE);
+		}
+		// this.Interaction.setPrimitiveShapeTypeEditable(true);
+		if (true) {
+			editableAttributes.add(EditableShapeAttributes.SHAPE_SIZE);
+		}
+		// this.Interaction.setSizeEditable(true);
+		if (true) {
+			editableAttributes.add(EditableShapeAttributes.LINE_STYLE);
+		}
+		// this.Interaction.getDefaultAttributes().setLineStyleEditable(true);
+		if (true) {
+			editableAttributes.add(EditableShapeAttributes.LINE_WIDTH);
+		}
+		// this.Interaction.getDefaultAttributes().setLineWidthEditable(true);
+		if (true) {
+			editableAttributes.add(EditableShapeAttributes.LINE_COLOUR);
+		}
+		// this.Interaction.getDefaultAttributes().setLineColourEditable(true);
+		this.NonInteraction.setEditableAttributes(editableAttributes);
+	}
+
+	private void defineParentingNonInteraction() {
+		HashSet<IShapeObjectType> set = new HashSet<IShapeObjectType>();
+		set.addAll(Arrays.asList(new IShapeObjectType[] { this.Outcome }));
+		for (IShapeObjectType child : set) {
+			this.NonInteraction.getParentingRules().addChild(child);
+		}
+
+	}
+
+	public ShapeObjectType getNonInteraction() {
+		return this.NonInteraction;
+	}
+
 
 	private void defineParentingInteraction() {
 		HashSet<IShapeObjectType> set = new HashSet<IShapeObjectType>();
@@ -1130,6 +1227,7 @@ public class SbgnERNotationSyntaxService implements INotationSyntaxService {
 		this.Modulation.getDefaultAttributes().setLineStyle(LineStyle.SOLID);
 		this.Modulation.getDefaultAttributes().setLineColour(
 				new RGB(lc[0], lc[1], lc[2]));
+		this.Modulation.getDefaultAttributes().addPropertyDefinition(createCisTransProperty());
 		EnumSet<LinkEditableAttributes> editableAttributes = EnumSet
 				.noneOf(LinkEditableAttributes.class);
 		if (true) {
@@ -1193,7 +1291,7 @@ public class SbgnERNotationSyntaxService implements INotationSyntaxService {
 
 		set = new HashSet<IShapeObjectType>();
 		set.addAll(Arrays.asList(new IShapeObjectType[] { this.Acceptor,
-				this.Interaction, this.Observable }));
+				this.Interaction, this.NonInteraction, this.Observable }));
 		for (IShapeObjectType tgt : set) {
 			this.Modulation.getLinkConnectionRules().addConnection(this.Entity,
 					tgt);
@@ -1225,6 +1323,7 @@ public class SbgnERNotationSyntaxService implements INotationSyntaxService {
 		this.Stimulation.getDefaultAttributes().setLineStyle(LineStyle.SOLID);
 		this.Stimulation.getDefaultAttributes().setLineColour(
 				new RGB(lc[0], lc[1], lc[2]));
+		this.Stimulation.getDefaultAttributes().addPropertyDefinition(createCisTransProperty());
 		EnumSet<LinkEditableAttributes> editableAttributes = EnumSet
 				.noneOf(LinkEditableAttributes.class);
 		if (true) {
@@ -1288,7 +1387,7 @@ public class SbgnERNotationSyntaxService implements INotationSyntaxService {
 
 		set = new HashSet<IShapeObjectType>();
 		set.addAll(Arrays.asList(new IShapeObjectType[] { this.Acceptor,
-				this.Interaction, this.Observable }));
+				this.Interaction, this.NonInteraction, this.Observable }));
 		for (IShapeObjectType tgt : set) {
 			this.Stimulation.getLinkConnectionRules().addConnection(
 					this.Entity, tgt);
@@ -1533,6 +1632,7 @@ public class SbgnERNotationSyntaxService implements INotationSyntaxService {
 		this.Inhibition.getDefaultAttributes().setLineStyle(LineStyle.SOLID);
 		this.Inhibition.getDefaultAttributes().setLineColour(
 				new RGB(lc[0], lc[1], lc[2]));
+		this.Inhibition.getDefaultAttributes().addPropertyDefinition(createCisTransProperty());
 		EnumSet<LinkEditableAttributes> editableAttributes = EnumSet
 				.noneOf(LinkEditableAttributes.class);
 		if (true) {
@@ -1572,7 +1672,7 @@ public class SbgnERNotationSyntaxService implements INotationSyntaxService {
 		}
 		// sport.getDefaultAttributes().setColourEditable(true);
 		sport.setEditableAttributes(editablesportAttributes);
-		tport.getDefaultAttributes().setGap((short) 5);
+		tport.getDefaultAttributes().setGap((short) 10);
 		tport.getDefaultAttributes().setEndDecoratorType(
 				LinkEndDecoratorShape.BAR);// , 5,5);
 		tport.getDefaultAttributes().setEndSize(new Dimension(5, 5));
@@ -1594,7 +1694,7 @@ public class SbgnERNotationSyntaxService implements INotationSyntaxService {
 
 		set = new HashSet<IShapeObjectType>();
 		set.addAll(Arrays.asList(new IShapeObjectType[] { this.Acceptor,
-				this.Interaction, this.Observable }));
+				this.Interaction, this.NonInteraction, this.Observable }));
 		for (IShapeObjectType tgt : set) {
 			this.Inhibition.getLinkConnectionRules().addConnection(this.Entity,
 					tgt);
@@ -1627,6 +1727,7 @@ public class SbgnERNotationSyntaxService implements INotationSyntaxService {
 		this.AbsInhibition.getDefaultAttributes().setLineStyle(LineStyle.SOLID);
 		this.AbsInhibition.getDefaultAttributes().setLineColour(
 				new RGB(lc[0], lc[1], lc[2]));
+		this.AbsInhibition.getDefaultAttributes().addPropertyDefinition(createCisTransProperty());
 		EnumSet<LinkEditableAttributes> editableAttributes = EnumSet
 				.noneOf(LinkEditableAttributes.class);
 		if (true) {
@@ -1669,7 +1770,7 @@ public class SbgnERNotationSyntaxService implements INotationSyntaxService {
 		}
 		// sport.getDefaultAttributes().setColourEditable(true);
 		sport.setEditableAttributes(editablesportAttributes);
-		tport.getDefaultAttributes().setGap((short) 5);
+		tport.getDefaultAttributes().setGap((short) 15);
 		tport.getDefaultAttributes().setEndDecoratorType(
 				LinkEndDecoratorShape.DOUBLE_BAR);// , 5,5);
 		tport.getDefaultAttributes().setEndSize(new Dimension(5, 5));
@@ -1691,7 +1792,7 @@ public class SbgnERNotationSyntaxService implements INotationSyntaxService {
 
 		set = new HashSet<IShapeObjectType>();
 		set.addAll(Arrays.asList(new IShapeObjectType[] { this.Acceptor,
-				this.Interaction, this.Observable }));
+				this.Interaction, this.NonInteraction, this.Observable }));
 		for (IShapeObjectType tgt : set) {
 			this.AbsInhibition.getLinkConnectionRules().addConnection(
 					this.Entity, tgt);
@@ -1725,6 +1826,7 @@ public class SbgnERNotationSyntaxService implements INotationSyntaxService {
 				LineStyle.SOLID);
 		this.NecessaryStimulation.getDefaultAttributes().setLineColour(
 				RGB.BLACK);
+		this.NecessaryStimulation.getDefaultAttributes().addPropertyDefinition(createCisTransProperty());
 		EnumSet<LinkEditableAttributes> editableAttributes = EnumSet
 				.noneOf(LinkEditableAttributes.class);
 		if (true) {
@@ -1789,7 +1891,7 @@ public class SbgnERNotationSyntaxService implements INotationSyntaxService {
 
 		set = new HashSet<IShapeObjectType>();
 		set.addAll(Arrays.asList(new IShapeObjectType[] { this.Acceptor,
-				this.Interaction, this.Observable }));
+				this.Interaction, this.NonInteraction, this.Observable }));
 		for (IShapeObjectType tgt : set) {
 			this.NecessaryStimulation.getLinkConnectionRules().addConnection(
 					this.Entity, tgt);
@@ -1822,6 +1924,7 @@ public class SbgnERNotationSyntaxService implements INotationSyntaxService {
 		this.AbsStimulation.getDefaultAttributes()
 				.setLineStyle(LineStyle.SOLID);
 		this.AbsStimulation.getDefaultAttributes().setLineColour(RGB.BLACK);
+		this.AbsStimulation.getDefaultAttributes().addPropertyDefinition(createCisTransProperty());
 		EnumSet<LinkEditableAttributes> editableAttributes = EnumSet
 				.noneOf(LinkEditableAttributes.class);
 		if (true) {
@@ -1883,7 +1986,7 @@ public class SbgnERNotationSyntaxService implements INotationSyntaxService {
 
 		set = new HashSet<IShapeObjectType>();
 		set.addAll(Arrays.asList(new IShapeObjectType[] { this.Acceptor,
-				this.Interaction, this.Observable }));
+				this.Interaction, this.NonInteraction, this.Observable }));
 		for (IShapeObjectType tgt : set) {
 			this.AbsStimulation.getLinkConnectionRules().addConnection(
 					this.Entity, tgt);
@@ -1916,6 +2019,8 @@ public class SbgnERNotationSyntaxService implements INotationSyntaxService {
 				.setLineStyle(LineStyle.SOLID);
 		this.InteractionArc.getDefaultAttributes().setLineColour(
 				new RGB(lc[0], lc[1], lc[2]));
+		this.InteractionArc.getDefaultAttributes().addPropertyDefinition(createCisTransProperty());
+		this.InteractionArc.getDefaultAttributes().addPropertyDefinition(createStoichiometryProperty());
 		EnumSet<LinkEditableAttributes> editableAttributes = EnumSet
 				.noneOf(LinkEditableAttributes.class);
 		if (true) {
@@ -1981,6 +2086,8 @@ public class SbgnERNotationSyntaxService implements INotationSyntaxService {
 		for (IShapeObjectType tgt : set) {
 			this.InteractionArc.getLinkConnectionRules().addConnection(
 					this.Interaction, tgt);
+			this.InteractionArc.getLinkConnectionRules().addConnection(
+					this.NonInteraction, tgt);
 		}
 		set = new HashSet<IShapeObjectType>();
 		set.addAll(Arrays.asList(new IShapeObjectType[] { this.Entity,
