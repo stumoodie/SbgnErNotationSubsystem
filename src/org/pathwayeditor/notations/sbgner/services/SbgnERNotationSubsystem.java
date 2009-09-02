@@ -16,10 +16,10 @@ import org.pathwayeditor.businessobjects.notationsubsystem.INotationValidationSe
 import org.pathwayeditor.notationsubsystem.toolkit.definition.GeneralNotation;
 
 public class SbgnERNotationSubsystem implements INotationSubsystem {
-	private static final String GLOBAL_ID = "org.pathwayeditor.notations.sbgnpd";
+	private static final String GLOBAL_ID = "org.pathwayeditor.notations.sbgner";
 	private static final String DESCRIPTION = "SBGN Entity Relationship Notation";
 	private static final String NAME = "SBGN-ER";
-	private static final Version VERSION = new Version(0, 9, 0);
+	private static final Version VERSION = new Version(0, 9, 1);
 	private SbgnERNotationSyntaxService syntaxService;
 	private SbgnERValidationService validationService;
 	private INotation context;
