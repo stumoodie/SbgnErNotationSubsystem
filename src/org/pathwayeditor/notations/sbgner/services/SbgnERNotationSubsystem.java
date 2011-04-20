@@ -1,9 +1,27 @@
+/*
+  Licensed to the Court of the University of Edinburgh (UofE) under one
+  or more contributor license agreements.  See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership.  The UofE licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing,
+  software distributed under the License is distributed on an
+  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  KIND, either express or implied.  See the License for the
+  specific language governing permissions and limitations
+  under the License.
+*/
 package org.pathwayeditor.notations.sbgner.services;
 
 import java.util.Collections;
 import java.util.Set;
 
-import org.pathwayeditor.businessobjects.drawingprimitives.ICanvas;
+import org.pathwayeditor.businessobjects.drawingprimitives.IModel;
 import org.pathwayeditor.businessobjects.drawingprimitives.attributes.Version;
 import org.pathwayeditor.businessobjects.notationsubsystem.INotation;
 import org.pathwayeditor.businessobjects.notationsubsystem.INotationAutolayoutService;
@@ -66,18 +84,10 @@ public class SbgnERNotationSubsystem implements INotationSubsystem {
 
 	private class DefaultAutolayoutService implements INotationAutolayoutService {
 
-		public INotation getContext() {
-			return context;
-		}
-
 		public boolean isImplemented() {
 			return false;
 		}
-		public INotationSubsystem getServiceProvider() {
-			return SbgnERNotationSubsystem.this;
-		}
-
-        public void layout(ICanvas canvas) {
+        public void layout(IModel canvas) {
             throw new UnsupportedOperationException("Notation subsystem does not support this operation");
         }
 
@@ -88,7 +98,7 @@ public class SbgnERNotationSubsystem implements INotationSubsystem {
         public INotationSubsystem getNotationSubsystem() {
             return SbgnERNotationSubsystem.this;
         }
-		
+
 	}
 
     public boolean isFallback() {
@@ -96,14 +106,12 @@ public class SbgnERNotationSubsystem implements INotationSubsystem {
     }
 
 
-	public void registerCanvas(ICanvas canvasToRegister) {
-		// TODO Auto-generated method stub
-		
+	@Override
+	public void registerModel(IModel modelToRegister) {
 	}
 
 
-	public void unregisterCanvas(ICanvas canvasToRegister) {
-		// TODO Auto-generated method stub
-		
+	@Override
+	public void unregisterModel(IModel modelToRegister) {
 	}
 }
